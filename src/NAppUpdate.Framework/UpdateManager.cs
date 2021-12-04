@@ -34,6 +34,7 @@ namespace NAppUpdate.Framework
 							TempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()),
 							UpdateProcessName = "NAppUpdateProcess",
 							UpdateExecutableName = "foo.exe", // Naming it updater.exe seem to trigger the UAC, and we don't want that
+							WorkingDirectory = Path.GetDirectoryName(ApplicationPath)
 						};
 
 			// Need to do this manually here because the BackupFolder property is protected using the static instance, which we are
@@ -344,7 +345,7 @@ namespace NAppUpdate.Framework
 					// this prevents the updater from writing to e.g. c:\windows\system32
 					// if the process is started by autorun on windows logon.
 					// ReSharper disable AssignNullToNotNullAttribute
-					Environment.CurrentDirectory = Path.GetDirectoryName(ApplicationPath);
+					Environment.CurrentDirectory = Config.WorkingDirectory;
 					// ReSharper restore AssignNullToNotNullAttribute
 
 					// Make sure the current backup folder is accessible for writing from this process

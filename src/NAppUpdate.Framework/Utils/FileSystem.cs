@@ -118,7 +118,7 @@ namespace NAppUpdate.Framework.Utils
 
 		public static string GetFullPath(string localPath)
 		{
-			var currentDirectory = AppDomain.CurrentDomain.BaseDirectory;
+			var currentDirectory = UpdateManager.Instance.Config.WorkingDirectory;
 			return Path.Combine(currentDirectory, localPath);
 		}
 	}

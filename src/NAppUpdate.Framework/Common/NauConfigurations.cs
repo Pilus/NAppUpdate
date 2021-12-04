@@ -49,5 +49,6 @@ namespace NAppUpdate.Framework.Common
 		/// in an external class-library, never in the application EXE, for that reason.
 		/// </summary>
 		public List<string> DependenciesForColdUpdate { get; set; }
+		public string WorkingDirectory { get; set; }
 	}
 }
