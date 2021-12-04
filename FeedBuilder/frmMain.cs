@@ -306,6 +306,7 @@ namespace FeedBuilder
 
 					task.SetAttribute("fileSize", fileInfoEx.FileInfo.Length.ToString(CultureInfo.InvariantCulture));
 					if (!string.IsNullOrEmpty(fileInfoEx.FileVersion)) task.SetAttribute("version", fileInfoEx.FileVersion);
+					task.SetAttribute("hotswap", "true");
 
 					XmlElement conds = doc.CreateElement("Conditions");
 					XmlElement cond;
