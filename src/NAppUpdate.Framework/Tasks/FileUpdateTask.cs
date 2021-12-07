@@ -25,6 +25,9 @@ namespace NAppUpdate.Framework.Tasks
 			"Default update action is a cold update; check here if a hot file swap should be attempted"
 			, false)]
 		public bool CanHotSwap { get; set; }
+		
+		[NauField("fileSize", "The size of the file", false)]
+		public long FileSize { get; set; }
 
 		private string _destinationFile, _backupFile, _tempFile;
 

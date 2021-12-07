@@ -27,6 +27,7 @@ namespace NAppUpdate.Framework
 			State = UpdateProcessState.NotChecked;
 			UpdatesToApply = new List<IUpdateTask>();
 			ApplicationPath = Process.GetCurrentProcess().MainModule.FileName;
+			
 			UpdateFeedReader = new NauXmlFeedReader();
 			Logger = new Logger();
 			Config = new NauConfigurations
@@ -79,7 +80,7 @@ namespace NAppUpdate.Framework
 		public NauConfigurations Config { get; set; }
 
 		public string BaseUrl { get; set; }
-		internal IList<IUpdateTask> UpdatesToApply { get; private set; }
+		public IList<IUpdateTask> UpdatesToApply { get; private set; }
 		public int UpdatesAvailable { get { return UpdatesToApply == null ? 0 : UpdatesToApply.Count; } }
 		public UpdateProcessState State { get; private set; }
 

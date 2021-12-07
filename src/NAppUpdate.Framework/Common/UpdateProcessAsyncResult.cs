@@ -54,7 +54,7 @@ namespace NAppUpdate.Framework.Common
 			}
 
 			// Operation is done: if an exception occured, throw it
-			if (_exception != null) throw _exception;
+			if (_exception != null) throw new Exception("Exception in update operate", _exception);
 		}
 
 		public bool IsCompleted

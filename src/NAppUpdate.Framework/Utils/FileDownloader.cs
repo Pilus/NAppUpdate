@@ -43,34 +43,44 @@ namespace NAppUpdate.Framework.Utils
 			var request = WebRequest.Create(_uri);
 			request.Proxy = Proxy;
 
-			using (var response = request.GetResponse())
-			using (var tempFile = File.Create(tempLocation))
+			try
 			{
-				using (var responseStream = response.GetResponseStream())
+				using (var response = request.GetResponse())
 				{
-					if (responseStream == null)
-						return false;
-
-					long downloadSize = response.ContentLength;
-					long totalBytes = 0;
-					var buffer = new byte[_bufferSize];
-					const int reportInterval = 1;
-					DateTime stamp = DateTime.Now.Subtract(new TimeSpan(0, 0, reportInterval));
-					int bytesRead;
-					do
+					using (var tempFile = File.Create(tempLocation))
 					{
-						bytesRead = responseStream.Read(buffer, 0, buffer.Length);
-						totalBytes += bytesRead;
-						tempFile.Write(buffer, 0, bytesRead);
+						using (var responseStream = response.GetResponseStream())
+						{
+							if (responseStream == null)
+								return false;
 
-						if (onProgress == null || !(DateTime.Now.Subtract(stamp).TotalSeconds >= reportInterval)) continue;
-						ReportProgress(onProgress, totalBytes, downloadSize);
-						stamp = DateTime.Now;
-					} while (bytesRead > 0 && !UpdateManager.Instance.ShouldStop);
+							long downloadSize = response.ContentLength;
+							long totalBytes = 0;
+							var buffer = new byte[_bufferSize];
+							const int reportInterval = 1;
+							DateTime stamp = DateTime.Now.Subtract(new TimeSpan(0, 0, reportInterval));
+							int bytesRead;
+							do
+							{
+								bytesRead = responseStream.Read(buffer, 0, buffer.Length);
+								totalBytes += bytesRead;
+								tempFile.Write(buffer, 0, bytesRead);
 
-					ReportProgress(onProgress, totalBytes, downloadSize);
-					return totalBytes == downloadSize;
+								if (onProgress == null || !(DateTime.Now.Subtract(stamp).TotalSeconds >= reportInterval)) continue;
+								ReportProgress(onProgress, totalBytes, downloadSize);
+								stamp = DateTime.Now;
+							} while (bytesRead > 0 && !UpdateManager.Instance.ShouldStop);
+
+							ReportProgress(onProgress, totalBytes, downloadSize);
+							return totalBytes == downloadSize;
+						}
+					}
 				}
+			}
+			catch (WebException e)
+			{
+				var msg = e.Message + $" at {_uri}";
+				throw new Exception(msg, e);
 			}
 		}
 
