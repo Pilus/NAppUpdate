@@ -524,7 +524,7 @@ namespace FeedBuilder
 			lstFiles.BeginUpdate();
 			lstFiles.Items.Clear();
 
-			FileSystemEnumerator enumerator = new FileSystemEnumerator(outputDir, "*.*", true);
+			FileSystemEnumerator enumerator = new FileSystemEnumerator(outputDir, "*", true);
 			foreach (FileInfo fi in enumerator.Matches())
 			{
 				string filePath = fi.FullName;
