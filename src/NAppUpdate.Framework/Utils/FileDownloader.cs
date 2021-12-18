@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Net;
+using System.Threading;
 using NAppUpdate.Framework.Common;
 
 namespace NAppUpdate.Framework.Utils
@@ -38,13 +39,50 @@ namespace NAppUpdate.Framework.Utils
 			return DownloadToFile(tempLocation, null);
 		}
 
-		public bool DownloadToFile(string tempLocation, Action<UpdateProgressInfo> onProgress)
+		public bool DownloadToFile(string tempLocation, Action<UpdateProgressInfo> onProgress, int retry = 0)
 		{
 			var request = WebRequest.Create(_uri);
 			request.Proxy = Proxy;
 
+			const int reportInterval = 1;
+			bool done = false;
+			using (WebClient wc = new WebClient())
+			{
+				DateTime stamp = DateTime.Now.Subtract(new TimeSpan(0, 0, reportInterval));
+				long totalBytes = 0;
+				wc.DownloadProgressChanged += (object sender, DownloadProgressChangedEventArgs e) =>
+				{
+					totalBytes = e.TotalBytesToReceive;
+					if (onProgress == null || !(DateTime.Now.Subtract(stamp).TotalSeconds >= reportInterval))
+					{
+						return;
+					}
+
+					ReportProgress(onProgress, e.BytesReceived, e.TotalBytesToReceive);
+					stamp = DateTime.Now;
+				};
+				wc.DownloadFileCompleted += (sender, args) =>
+				{
+					done = true;
+				};
+				wc.DownloadFileAsync(_uri,tempLocation);
+
+				while (!done)
+				{
+					Thread.Sleep(10);
+				}
+				
+				//File.Copy(tempLocation, Path.Combine(@"C:\Temp\Kingmaker", (tempLocation)));
+				ReportProgress(onProgress, totalBytes, totalBytes);
+			}
+
+			return true;
+
+			/*
 			try
 			{
+				long downloadSize;
+				long totalBytes = 0;
 				using (var response = request.GetResponse())
 				{
 					using (var tempFile = File.Create(tempLocation))
@@ -52,10 +90,9 @@ namespace NAppUpdate.Framework.Utils
 						using (var responseStream = response.GetResponseStream())
 						{
 							if (responseStream == null)
-								return false;
+								throw new Exception($"No response stream for {_uri}");
 
-							long downloadSize = response.ContentLength;
-							long totalBytes = 0;
+							downloadSize = response.ContentLength;
 							var buffer = new byte[_bufferSize];
 							const int reportInterval = 1;
 							DateTime stamp = DateTime.Now.Subtract(new TimeSpan(0, 0, reportInterval));
@@ -66,22 +103,42 @@ namespace NAppUpdate.Framework.Utils
 								totalBytes += bytesRead;
 								tempFile.Write(buffer, 0, bytesRead);
 
-								if (onProgress == null || !(DateTime.Now.Subtract(stamp).TotalSeconds >= reportInterval)) continue;
+								if (onProgress == null || !(DateTime.Now.Subtract(stamp).TotalSeconds >= reportInterval))
+								{
+									continue;
+								}
+
 								ReportProgress(onProgress, totalBytes, downloadSize);
 								stamp = DateTime.Now;
 							} while (bytesRead > 0 && !UpdateManager.Instance.ShouldStop);
 
 							ReportProgress(onProgress, totalBytes, downloadSize);
-							return totalBytes == downloadSize;
+							if (totalBytes == downloadSize)
+							{
+								return true;
+							}
+
+							
 						}
 					}
+				}
+				
+				if (retry <= 0)
+				{	
+					File.Copy(tempLocation, @"c:\Temp\response");
+					throw new Exception($"Byte mismatch for {_uri}. Expected {downloadSize}, got {totalBytes}.");
+				}
+				else
+				{
+					Thread.Sleep(100);
+					return DownloadToFile(tempLocation, onProgress, retry - 1);
 				}
 			}
 			catch (WebException e)
 			{
 				var msg = e.Message + $" at {_uri}";
 				throw new Exception(msg, e);
-			}
+			}*/
 		}
 
 		private void ReportProgress(Action<UpdateProgressInfo> onProgress, long totalBytes, long downloadSize)
