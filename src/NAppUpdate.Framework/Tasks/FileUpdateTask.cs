@@ -12,6 +12,9 @@ namespace NAppUpdate.Framework.Tasks
 	{
 		[NauField("localPath", "The local path of the file to update", true)]
 		public string LocalPath { get; set; }
+		
+		[NauField("mirrorPath", "The mirror path of the file to update", false)]
+		public string MirrorPath { get; set; }
 
 		[NauField("updateTo",
 			"File name on the remote location; same name as local path will be used if left blank"
@@ -52,8 +55,9 @@ namespace NAppUpdate.Framework.Tasks
 
 			UpdateManager.Instance.Logger.Log("FileUpdateTask: Downloading {0} with BaseUrl of {1} to {2}", fileName, baseUrl, tempFileLocal);
 
-			if (!source.GetData(fileName, baseUrl, OnProgress, ref tempFileLocal))
-				throw new UpdateProcessFailedException("FileUpdateTask: Failed to get file from source");
+			var hasMirror = !string.IsNullOrEmpty(MirrorPath);
+			if (!source.GetData(!hasMirror ? fileName : MirrorPath, !hasMirror ? baseUrl : null, OnProgress, ref tempFileLocal))
+				throw new UpdateProcessFailedException($"FileUpdateTask: Failed to get file {fileName} from source");
 
 			_tempFile = tempFileLocal;
 			if (_tempFile == null)
