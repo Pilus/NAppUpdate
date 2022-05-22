@@ -72,7 +72,11 @@ namespace NAppUpdate.Framework.Utils
 							} while (bytesRead > 0 && !UpdateManager.Instance.ShouldStop);
 
 							ReportProgress(onProgress, totalBytes, downloadSize);
-							return totalBytes == downloadSize;
+							if (totalBytes != downloadSize && downloadSize != -1)
+							{
+								throw new UpdateProcessFailedException($"Failed to download file from {_uri}. Expected {downloadSize} bytes, got {totalBytes} bytes.");
+							}
+							return downloadSize == -1 || totalBytes == downloadSize;
 						}
 					}
 				}
